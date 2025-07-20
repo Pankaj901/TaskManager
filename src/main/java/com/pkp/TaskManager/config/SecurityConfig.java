@@ -22,7 +22,12 @@ public class SecurityConfig {
                 .roles("USER")
                 .build();
 
-        return new InMemoryUserDetailsManager(user);
+        UserDetails superuser = User.withUsername("superadmin")
+                .password(passwordEncoder().encode("admin456"))
+                .roles("ADMIN")
+                .build();
+
+        return new InMemoryUserDetailsManager(user, superuser);
     }
 
     @Bean
@@ -37,8 +42,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/tasks", "/tasks/describe/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/tasks").hasRole("USER")
-                        .requestMatchers(HttpMethod.PUT, "/tasks/**").hasRole("USER")
-                        .requestMatchers(HttpMethod.DELETE, "/tasks/**").hasRole("USER")
+                        .requestMatchers(HttpMethod.PUT, "/tasks/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/tasks/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 ).httpBasic(Customizer.withDefaults()); // ✅ basic auth enabled
 
